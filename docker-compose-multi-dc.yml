@@ -1,0 +1,119 @@
+version: '3.8'
+
+services:
+  # Datacenter 1 - US East
+  cassandra-dc1-node1:
+    image: cassandra:4.1
+    container_name: cassandra-dc1-node1
+    hostname: cassandra-dc1-node1
+    networks:
+      - cassandra-network
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=MultiDCCluster
+      - CASSANDRA_DC=us-east
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_SEEDS=cassandra-dc1-node1,cassandra-dc2-node1
+      - CASSANDRA_NUM_TOKENS=256
+    volumes:
+      - cassandra_dc1_data1:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe cluster' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
+  cassandra-dc1-node2:
+    image: cassandra:4.1
+    container_name: cassandra-dc1-node2
+    hostname: cassandra-dc1-node2
+    networks:
+      - cassandra-network
+    ports:
+      - "9043:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=MultiDCCluster
+      - CASSANDRA_DC=us-east
+      - CASSANDRA_RACK=rack2
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_SEEDS=cassandra-dc1-node1,cassandra-dc2-node1
+      - CASSANDRA_NUM_TOKENS=256
+    volumes:
+      - cassandra_dc1_data2:/var/lib/cassandra
+    depends_on:
+      cassandra-dc1-node1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe cluster' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
+  # Datacenter 2 - EU West
+  cassandra-dc2-node1:
+    image: cassandra:4.1
+    container_name: cassandra-dc2-node1
+    hostname: cassandra-dc2-node1
+    networks:
+      - cassandra-network
+    ports:
+      - "9044:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=MultiDCCluster
+      - CASSANDRA_DC=eu-west
+      - CASSANDRA_RACK=rack1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_SEEDS=cassandra-dc1-node1,cassandra-dc2-node1
+      - CASSANDRA_NUM_TOKENS=256
+    volumes:
+      - cassandra_dc2_data1:/var/lib/cassandra
+    depends_on:
+      cassandra-dc1-node1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe cluster' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
+  cassandra-dc2-node2:
+    image: cassandra:4.1
+    container_name: cassandra-dc2-node2
+    hostname: cassandra-dc2-node2
+    networks:
+      - cassandra-network
+    ports:
+      - "9045:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=MultiDCCluster
+      - CASSANDRA_DC=eu-west
+      - CASSANDRA_RACK=rack2
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - CASSANDRA_SEEDS=cassandra-dc1-node1,cassandra-dc2-node1
+      - CASSANDRA_NUM_TOKENS=256
+    volumes:
+      - cassandra_dc2_data2:/var/lib/cassandra
+    depends_on:
+      cassandra-dc2-node1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe cluster' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
+networks:
+  cassandra-network:
+    driver: bridge
+
+volumes:
+  cassandra_dc1_data1:
+  cassandra_dc1_data2:
+  cassandra_dc2_data1:
+  cassandra_dc2_data2:

@@ -1,0 +1,16 @@
+{
+  "name": "cassandra-test",
+  "version": "1.0.0",
+  "description": "Cassandra CRUD test with Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "node test-crud.js",
+    "setup": "node setup-db.js",
+    "test-cluster": "node test-cluster-crud.js",
+    "setup-cluster": "node setup-cluster.js",
+    "setup-multi-dc": "node setup-multi-dc.js"
+  },
+  "dependencies": {
+    "cassandra-driver": "^4.7.2"
+  }
+}

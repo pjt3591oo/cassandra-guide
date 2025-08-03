@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra-db
+    ports:
+      - "9042:9042"
+    environment:
+      - CASSANDRA_CLUSTER_NAME=TestCluster
+      - CASSANDRA_DC=datacenter1
+      - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - cassandra-network
+
+  # Cassandra Web UI 제거 - 대신 cqlsh 또는 다른 GUI 도구 사용 권장
+  # cassandra-web 이미지들이 제대로 작동하지 않아 제거합니다.
+  # 대안:
+  # 1. docker exec -it cassandra-db cqlsh (명령줄)
+  # 2. TablePlus, DBeaver 등의 데스크톱 GUI 도구
+  # 3. DataStax Studio (무료, 다운로드 필요)
+
+networks:
+  cassandra-network:
+    driver: bridge
+
+volumes:
+  cassandra_data:
