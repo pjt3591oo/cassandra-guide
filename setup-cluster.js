@@ -10,18 +10,18 @@ async function setupClusterDatabase() {
     await client.connect();
     console.log('Connected to Cassandra cluster');
     
-    console.log('Creating keyspace with replication factor 3...');
+    console.log('Creating keyspace with replication factor 1...');
     
-    // Replicate to 3 nodes in datacenter1
+    // Replicate to 1 nodes in datacenter1
     await client.execute(`
-      CREATE KEYSPACE IF NOT EXISTS test_keyspace
+      CREATE KEYSPACE IF NOT EXISTS test_keyspace0
       WITH replication = {
         'class': 'NetworkTopologyStrategy',
-        'datacenter1': 3 
+        'datacenter1': 1
       }
       AND durable_writes = true
     `);
-    console.log('Keyspace created with RF=3');
+    console.log('Keyspace created with RF=1');
     
     await client.execute('USE test_keyspace');
     

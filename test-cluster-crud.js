@@ -1,9 +1,9 @@
 const cassandra = require('cassandra-driver');
-
+const KEYSPACE_NAME = 'test_keyspace0';
 const client = new cassandra.Client({
   contactPoints: ['localhost', 'localhost:9043', 'localhost:9044'],
   localDataCenter: 'datacenter1',
-  keyspace: 'test_keyspace',
+  keyspace: KEYSPACE_NAME,
   policies: {
     loadBalancing: new cassandra.policies.loadBalancing.RoundRobinPolicy()
   }
@@ -40,7 +40,7 @@ async function createUser(id, name, email, age, consistency = consistencyLevels.
       prepare: true,
       consistency: consistency 
     });
-    console.log(`Created user: ${name} (Consistency: ${getConsistencyName(consistency)})`);
+    // console.log(`Created user: ${name} (Consistency: ${getConsistencyName(consistency)})`);
   } catch (error) {
     console.error('Error creating user:', error.message);
   }
@@ -154,34 +154,39 @@ async function runClusterTests() {
   await connectToCluster();
   
   console.log('\n--- Basic CRUD Operations ---');
-  const userId1 = cassandra.types.Uuid.random();
-  const userId2 = cassandra.types.Uuid.random();
-  const userId3 = cassandra.types.Uuid.random();
-  
-  await createUser(userId1, 'Alice Johnson', 'alice@cluster.com', 28);
-  await createUser(userId2, 'Bob Smith', 'bob@cluster.com', 32);
-  await createUser(userId3, 'Charlie Brown', 'charlie@cluster.com', 45);
-  
-  await testConsistencyLevels();
-  
-  console.log('\n--- Interactive Node Failure Test ---');
-  console.log('Would you like to test node failure scenario? (y/n)');
-  
-  const rl = require('readline').createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-  
-  rl.question('', async (answer) => {
-    if (answer.toLowerCase() === 'y') {
-      await testNodeFailure();
-    }
+  for (let i = 0 ; i < 1_000; ++i) {
+
+    const userId = cassandra.types.Uuid.random();
+    console.log(userId.toString())
     
-    await client.shutdown();
-    console.log('\n=== Cluster Tests Completed ===');
-    rl.close();
-    process.exit(0);
-  });
+    await createUser(userId, `mung-${i}`, `mung-${i}@cluster.com`, 32);
+
+    const replicas = await client.getReplicas(KEYSPACE_NAME, Buffer.from(userId.toString(), 'utf-8'));
+    console.log(replicas.map(replica => replica.address).join(', '));
+  }
+  // await createUser(userId2, 'Bob Smith', 'bob@cluster.com', 32);
+  // await createUser(userId3, 'Charlie Brown', 'charlie@cluster.com', 45);
+  
+  // await testConsistencyLevels();
+  
+  // console.log('\n--- Interactive Node Failure Test ---');
+  // console.log('Would you like to test node failure scenario? (y/n)');
+  
+  // const rl = require('readline').createInterface({
+  //   input: process.stdin,
+  //   output: process.stdout
+  // });
+  
+  // rl.question('', async (answer) => {
+  //   if (answer.toLowerCase() === 'y') {
+  //     await testNodeFailure();
+  //   }
+    
+  //   await client.shutdown();
+  //   console.log('\n=== Cluster Tests Completed ===');
+  //   rl.close();
+  //   process.exit(0);
+  // });
 }
 
 runClusterTests().catch(console.error);
